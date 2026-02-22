@@ -85,10 +85,10 @@ response = requests.get(
 def get_wikidata_items():
     QUERY = """
     SELECT DISTINCT ?item WHERE {
-    ?item p:P31 ?statement0.
-    ?statement0 (ps:P31/(wdt:P279*)) wd:Q3305213.
-    ?item p:P6002 ?statement1.
-    ?statement1 (ps:P6002) _:anyValueP6002.
+  ?item p:P31 ?statement0.
+  ?statement0 (ps:P31/(wdt:P279*)) wd:Q3305213.
+  ?item p:P6002 ?statement1.
+  ?statement1 (ps:P6002) _:anyValueP6002.
     }
     """
     site = pywikibot.Site("wikidata", "wikidata")
@@ -104,5 +104,29 @@ def get_wikidata_items():
        i+=1
     
     df = pd.DataFrame(l.items(), columns=["wikidata_id", "wikiart_id"])
-    df.to_csv("ids.csv")
-get_wikidata_items()   
+    df.to_csv("images.csv")
+def get_wikidata_items_with_img():
+    QUERY = """
+    SELECT DISTINCT ?item WHERE {
+  ?item p:P31 ?statement0.
+  ?statement0 (ps:P31/(wdt:P279*)) wd:Q3305213.
+  ?item p:P18 ?statement1.
+  ?statement1 (ps:P18) _:anyValueP18.
+    }
+    
+    """
+    site = pywikibot.Site("wikidata", "wikidata")
+    repo = site.data_repository()
+
+    generator = pagegenerators.PreloadingEntityGenerator(pagegenerators.WikidataSPARQLPageGenerator(QUERY,site=repo))
+    l = []
+    i=0
+    for item in generator:
+       
+       l.append(item.getID())
+       
+       i+=1
+       print(i)
+    df = pd.DataFrame(l, columns=["wikidata_id"])
+    df.to_csv("images.csv")
+get_wikidata_items_with_img()   
