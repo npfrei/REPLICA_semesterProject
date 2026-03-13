@@ -72,7 +72,7 @@ def get_embeddings(id_series, model_arg): # Rename model to model_arg to avoid c
     for item_url in id_series:
         image_id_suffix = item_url.split("/")[-1] # Extract suffix for each item
         image = get_image(get_image_name(image_id_suffix))
-
+        Image.save(image, f"../../data/images/{image_id_suffix}.jpg") # Save image locally for reference
         with torch.inference_mode():
             with torch.autocast('cuda', dtype=torch.bfloat16):
                 batch_img = make_transform()(image)[None]
@@ -88,7 +88,7 @@ def get_image_name(id):
     return response.json().get("statements", {"P18": [-2]}).get("P18",  [-1])[0].get("value", {"content":""}).get("content", "").replace(" ", "_")
 
 model = load_model()
-df = pd.read_csv("images_with_owner3.csv")[:100]
+df = pd.read_csv("images_with_owner3.csv")
 dfd = dd.from_pandas(df, npartitions=2)
 # The meta for map_partitions should describe the output of the function, which is a pandas Series of numpy arrays.
 # Need to create a dummy input to infer the shape of the embedding array.
