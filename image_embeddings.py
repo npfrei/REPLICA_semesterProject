@@ -1,4 +1,3 @@
-import pipreqs
 import requests
 from io import BytesIO
 from PIL import Image
