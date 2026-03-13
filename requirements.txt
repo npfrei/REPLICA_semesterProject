@@ -17,6 +17,6 @@ submitit==1.5.4
 termcolor==3.3.0
 torch==2.6.0
 torchmetrics==1.9.0
-torchvision==0.21.0
+torchvision>=0.21.0
 xformers==0.0.35
 numpy==1.25.2
