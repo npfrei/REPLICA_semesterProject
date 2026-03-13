@@ -2,7 +2,6 @@ dask==2026.1.2
 ftfy==6.3.1
 geopy==2.4.1
 matplotlib==3.10.8
-MultiScaleDeformableAttention==1.0
 omegaconf==2.3.0
 openpyxl==3.1.5
 packaging==26.0
