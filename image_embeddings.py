@@ -12,8 +12,8 @@ import dask
 from time import sleep
 import numpy as np
 MODEL_NAME = "dinov3_vitl16"
-LOCAL_REPO_PATH = "..\..\data\dinov3"
-WEIGHT_PATH = r"..\..\data\dinov3_vitl16_pretrain_lvd1689m-8aa4cbdd.pth" # Needs to be requested from Meta (no automatic download)
+LOCAL_REPO_PATH = "../../data/dinov3"
+WEIGHT_PATH = r"../../data/dinov3_vitl16_pretrain_lvd1689m-8aa4cbdd.pth" # Needs to be requested from Meta (no automatic download)
 
 
 def load_model():
