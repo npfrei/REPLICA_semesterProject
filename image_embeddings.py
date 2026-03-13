@@ -1,3 +1,4 @@
+import pipreqs
 import requests
 from io import BytesIO
 from PIL import Image
@@ -6,15 +7,15 @@ import hashlib
 from wikiart import BASE_URL_WIKIDATA, BearerAuth, wikidata_access_token
 from torchvision.transforms import v2
 import pandas as pd
-from parallel_pandas import ParallelPandas
 import dask.dataframe as dd
 from dask import delayed
 import dask
 from time import sleep
+import numpy as np
 MODEL_NAME = "dinov3_vitl16"
-LOCAL_REPO_PATH = "dinov3"
-WEIGHT_PATH = r"C:\Users\frein\Downloads\dinov3_vitl16_pretrain_lvd1689m-8aa4cbdd.pth" # Needs to be requested from Meta (no automatic download)
-WEIGHT_PATH = "/content/drive/MyDrive/nflteams/dinov3_vitl16_pretrain_lvd1689m-8aa4cbdd.pth" # Needs to be requested from Meta (no automatic download)
+LOCAL_REPO_PATH = "..\data\dinov3"
+WEIGHT_PATH = r"..\data\dinov3_vitl16_pretrain_lvd1689m-8aa4cbdd.pth" # Needs to be requested from Meta (no automatic download)
+
 
 def load_model():
 
@@ -85,6 +86,7 @@ def get_image_name(id):
     response = requests.get(BASE_URL_WIKIDATA + "entities/items/" + id, params=params, auth=BearerAuth(wikidata_access_token))
     response.raise_for_status()
     return response.json().get("statements", {"P18": [-2]}).get("P18",  [-1])[0].get("value", {"content":""}).get("content", "").replace(" ", "_")
+
 model = load_model()
 df = pd.read_csv("images_with_owner3.csv")[:100]
 dfd = dd.from_pandas(df, npartitions=2)
@@ -103,4 +105,5 @@ meta = pd.Series([np.zeros(dummy_embedding_shape, dtype=np.float32)], dtype=obje
 
 emb = dfd.item.map_partitions(get_embeddings, model_arg=delayed(load_model)(), meta=meta)
 
-emb.to_csv("images_with_embeddings.csv", index=False)
+emb.to_csv("../data/images_with_embeddings.csv", index=False)
+
