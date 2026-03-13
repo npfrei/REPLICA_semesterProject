@@ -360,6 +360,7 @@ df2.to_csv("images_with_location.csv", index=False)
 """
 #process_gallery_location_wikidata()
 #lambda_func_owned_by("Q45585")
+"""
 df = pd.read_csv("galleries_wikidata.csv", dtype={"gallery": str})
 df2 = pd.read_csv("galleries3.csv", dtype={"gallery": str})
 df3 = pd.read_csv("galleries2.csv", dtype={"gallery": str})
@@ -374,6 +375,7 @@ df = df[df["geo_location"]!="(0, 0)"]
 df = df[df["geo_location"].notna()]
 print(len(df["item"].unique()))
 df.to_csv("images_with_owner3.csv", index=False)
+"""
 """
 
 df = pd.read_csv("images_with_owner.csv", dtype={"owner": str})
