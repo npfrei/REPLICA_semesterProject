@@ -13,8 +13,8 @@ import dask
 from time import sleep
 import numpy as np
 MODEL_NAME = "dinov3_vitl16"
-LOCAL_REPO_PATH = "..\data\dinov3"
-WEIGHT_PATH = r"..\data\dinov3_vitl16_pretrain_lvd1689m-8aa4cbdd.pth" # Needs to be requested from Meta (no automatic download)
+LOCAL_REPO_PATH = "..\..\data\dinov3"
+WEIGHT_PATH = r"..\..\data\dinov3_vitl16_pretrain_lvd1689m-8aa4cbdd.pth" # Needs to be requested from Meta (no automatic download)
 
 
 def load_model():
@@ -53,7 +53,7 @@ def get_image(image_name):
         response.raise_for_status() # Raise an exception for HTTP errors
         image = Image.open(BytesIO(response.content))
         print("Image loaded successfully using PIL.")
-        sleep(0.8)
+        sleep(1.4) # Sleep to respect rate limits
     except requests.exceptions.RequestException as e:
         print(f"Error fetching image from URL: {e}")
         # Fallback or exit if image cannot be fetched
@@ -79,7 +79,7 @@ def get_embeddings(id_series, model_arg): # Rename model to model_arg to avoid c
                 batch_img = batch_img.to('cuda').to(dtype=torch.bfloat16) # Move to CUDA and convert to bfloat16
                 outputs = model_arg(batch_img)
                 # For DINOv3, the model likely returns the pooled output directly
-                embeddings_list.append(outputs.cpu().numpy().flatten()) # Flatten and append
+                embeddings_list.append((image_id_suffix,outputs.cpu().numpy().flatten())) # Flatten and append
     return pd.Series(embeddings_list, index=id_series.index)
 def get_image_name(id):
     params ={ "format":"json"}
@@ -105,5 +105,5 @@ meta = pd.Series([np.zeros(dummy_embedding_shape, dtype=np.float32)], dtype=obje
 
 emb = dfd.item.map_partitions(get_embeddings, model_arg=delayed(load_model)(), meta=meta)
 
-emb.to_csv("../data/images_with_embeddings.csv", index=False)
+emb.to_csv("../../data/images_with_embeddings.csv", index=False)
 
