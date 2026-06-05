@@ -3,9 +3,9 @@ from io import BytesIO
 from PIL import Image
 import torch
 import hashlib
-from wikidata_api import BASE_URL_WIKIDATA, BearerAuth
+from src.wikidata_api import BASE_URL_WIKIDATA, BearerAuth
 #wikidata access token and headers for API requests, stored in config.py for security and modularity, need to be requested from https://meta.wikimedia.org/wiki/Special:OAuthConsumerRegistration/propose/oauth2
-from config import wikidata_access_token, headers
+from src.config import wikidata_access_token, headers
 from torchvision.transforms import v2
 import pandas as pd
 import dask.dataframe as dd

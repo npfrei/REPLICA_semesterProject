@@ -5,7 +5,7 @@ from PIL import Image
 import matplotlib.pyplot as plt
 import numpy as np
 import os   
-from clusering import IMAGES_DIR_WIKIDATA
+from src.clusering import IMAGES_DIR_WIKIDATA
 import pandas as pd
 
 """

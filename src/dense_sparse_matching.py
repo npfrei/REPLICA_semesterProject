@@ -1,7 +1,7 @@
 
 from vismatch import get_matcher
 import pandas as pd
-from clusering import IMAGES_DIR_WIKIDATA
+from src.clusering import IMAGES_DIR_WIKIDATA
 import requests
 from PIL import Image
 

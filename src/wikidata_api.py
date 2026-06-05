@@ -4,7 +4,7 @@ Function used to filter which painting from wikidata to keep
 
 
 import requests
-from config import *
+from src.config import *
 import pandas as pd
 
 BASE_URL_WIKIDATA = "https://www.wikidata.org/w/rest.php/wikibase/v1/"
