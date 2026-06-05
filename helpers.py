@@ -1,8 +1,16 @@
 """
 Mostly code used for visualization and debugging purposes.
 """
+from PIL import Image
+import matplotlib.pyplot as plt
+import numpy as np
+import os   
+from clusering import IMAGES_DIR_WIKIDATA
+import pandas as pd
 
-
+"""
+Display two images next to each other
+"""
 def display_pair(im1, im2, save_path, title1, title2, title_main):
     f, axarr = plt.subplots(1, 2, figsize=(16, 8))
     image1 = Image.open(im1)
@@ -18,7 +26,9 @@ def display_pair(im1, im2, save_path, title1, title2, title_main):
     f.suptitle(title_main)
     f.savefig(save_path+im1.split("/")[-1].removesuffix(".jpg") + "_" + im2.split("/")[-1].removesuffix(".jpg") + ".jpg")
     plt.close()
-    
+"""
+Display all images in a given cluster
+"""  
 def display_cluster(df, id_, eps, title=""):
     files = df[df["cluster_"+ str(eps)]==id_]["label"]
     
@@ -57,10 +67,12 @@ def display_cluster(df, id_, eps, title=""):
             
         plt.close()
 
-
+"""
+Plot different stats about clusters in general
+"""
 def plot_clusters():
     df_clusters = pd.Dataframe(columns= ["clusters", "images"])
-    df = pd.read_csv("dbscan_labels7.csv")
+    df = pd.read_csv("dbscan_labels.csv")
     df = df.set_index("label")
     l=[]
     unique_c = set()
@@ -113,6 +125,9 @@ def plot_clusters():
     
     f.savefig("n_clusters.jpg")
 
+"""
+Plot all clusters for a given wikidata id
+"""
 def plot_clusters_id(id_):
     df = pd.read_csv("dbscan_labels9.csv")
     df.set_index("label", inplace=True)
@@ -153,7 +168,7 @@ def plot_clusters_id(id_):
                             final_im.paste(im, (0, y_offset))
                             y_offset += im.size[1]
                         final_im.save('test' + col + '.jpg')
-                        print("youpi")
+                        
                     else:
                         images = [Image.open(IMAGES_DIR_WIKIDATA +x+".jpg") for x in df2.index[:10] ]
                         widths, heights = zip(*(i.size for i in images))

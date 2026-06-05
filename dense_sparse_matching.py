@@ -1,14 +1,7 @@
 
 from vismatch import get_matcher
-from vismatch.viz import  plot_matches
-import itertools
 import pandas as pd
-
-from skimage.metrics import mean_squared_error, structural_similarity, peak_signal_noise_ratio
-import cv2
-import numpy as np
-import os
-from clusering import get_path_wa, IMAGES_DIR_WIKIDATA
+from clusering import IMAGES_DIR_WIKIDATA
 import requests
 from PIL import Image
 
@@ -79,34 +72,14 @@ def get_same_images(df_name, threshold=0.97, min_matches=100):
 
     df["inlier_ratio"] = df["inlier_kpts0"] / df["matched_kpts0"]
     df["same"] = (df["inlier_ratio"] >= threshold) &(df["matched_kpts0"] > min_matches) 
-    df["close"] = ((df["inlier_ratio"] >= 0.8) & (df["matched_kpts0"] > 50)) & ~(df["same"])
-    df["close_same_matches"] = (df["matched_kpts0"] > 300) & (df["inlier_ratio"] < 0.96) & df["same"]
-    df["close_ratio"] = (df["inlier_ratio"] >= 0.88) & (df["matched_kpts0"] <= 300) & (df["inlier_ratio"] < 0.96) & ~df["close"]
-
-
-    print(df["same"].value_counts())
-    print(df["close"].value_counts())
-    print(df["close_same_matches"].value_counts())
-    print(df["close_ratio"].value_counts())
-    print((df["inlier_ratio"]).describe())
     df.to_csv(df_name.replace(".csv", "_filtered.csv"), index=False)
     
 
 
 def main():
-    """
+    
     compute_image_matching()
     get_same_images("similarity8.csv", threshold=0.97, min_matches=100)
-    """
-    df = pd.read_csv("similarity9_filtered.csv")
-    df = df[df["same"]==True]
-    df2 = pd.read_csv("duplicates.csv")
-    df["item1"] = df["Unnamed: 0"].apply(lambda x : x.split(",")[0].replace("(", "").replace("\'", "").strip())
-    df["item2"] = df["Unnamed: 0"].apply(lambda x : x.split(",")[1].replace(")", "").replace("\'", "").strip())
-    for idx, row in df.iterrows():
-        item1 = row["item1"]
-        item2 = row["item2"]
-        if item1 not in df2["item1"].values and item1 not in df2["item2"].values and item2 not in df2["item1"].values and item2 not in df2["item2"].values:
-            df2 = pd.concat([df2, pd.DataFrame({"item1": [item1], "item2": [item2], "label":"same"})], ignore_index=True)
-    print(len(df2))
-main()
+     
+if __name__=="__main__":
+    main()
