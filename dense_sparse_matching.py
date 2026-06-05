@@ -10,9 +10,9 @@ img_size = 512  # optional
 def compute_image_matching():
     matcher = get_matcher("superpoint-lightglue", device="cuda")
     
-    df = pd.read_csv("dbscan_labels6.csv")
+    df = pd.read_csv("dbscan_labels.csv")
 
-    d = pd.read_csv("similarity7.csv")
+    d = pd.read_csv("similarity.csv")
     d = d.set_index("Unnamed: 0")
    
 
@@ -79,7 +79,7 @@ def get_same_images(df_name, threshold=0.97, min_matches=100):
 def main():
     
     compute_image_matching()
-    get_same_images("similarity8.csv", threshold=0.97, min_matches=100)
+    get_same_images("similarity.csv", threshold=0.97, min_matches=100)
      
 if __name__=="__main__":
     main()
