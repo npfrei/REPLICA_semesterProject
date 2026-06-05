@@ -3,14 +3,13 @@ from io import BytesIO
 from PIL import Image
 import torch
 import hashlib
-from wikiart import BASE_URL_WIKIDATA, BearerAuth
+from wikidata_api import BASE_URL_WIKIDATA, BearerAuth
 #wikidata access token and headers for API requests, stored in config.py for security and modularity, need to be requested from https://meta.wikimedia.org/wiki/Special:OAuthConsumerRegistration/propose/oauth2
 from config import wikidata_access_token, headers
 from torchvision.transforms import v2
 import pandas as pd
 import dask.dataframe as dd
 from dask import delayed
-import dask
 import os
 from time import sleep
 import numpy as np
@@ -138,28 +137,9 @@ def get_image_name(id):
     with open(f"../../data/metadata_same/{id}.json", "w") as f:
         json.dump(response.json(), f)
     image_name = response.json().get("statements", {"P18": [-2]}).get("P18",  [-1])[0].get("value", {"content":""}).get("content", "").replace(" ", "_")
-    
     return image_name
 
-files = os.listdir("../../data/images/")
-files = [f.removesuffix(".jpg") for f in files if f.endswith(".jpg")]
-model = load_model()
 
-df = pd.read_csv("images_with_owner4.csv")
-df = df[~df["item"].isin(files)]# Filter out items that have already been processed
-print(len(df))
-df = df[int(len(df)/2):]
-
-dfd = dd.from_pandas(df, npartitions=2)
-# The meta for map_partitions should describe the output of the function, which is a pandas Series of numpy arrays.
-# Need to create a dummy input to infer the shape of the embedding array.
-with torch.inference_mode():
-    with torch.autocast('cuda', dtype=torch.bfloat16):
-        # Create a dummy image, transform it, and pass it through the model to get output shape
-        dummy_image = Image.new('RGB', (256, 256)) # Example size
-        dummy_batch_img = make_transform()(dummy_image)[None].to('cuda').to(dtype=torch.bfloat16)
-        dummy_output = model(dummy_batch_img)
-        dummy_embedding_shape = dummy_output.cpu().numpy().flatten().shape
 
 
 
@@ -172,9 +152,25 @@ def get_embeddings_single(image, model_arg):
                 return outputs.cpu().numpy().flatten() # Flatten and return embedding
     
 def main():
+    files = os.listdir("../../data/images/")
+    files = [f.removesuffix(".jpg") for f in files if f.endswith(".jpg")]
+    model = load_model()
+
+    df = pd.read_csv("images.csv") #dataframe with the ID of each Wikidata item
+
+    df = df[int(len(df)/2):]
+
+    dfd = dd.from_pandas(df, npartitions=2) #split dataframe into 2 partitions to parallelize the embedding computation
+    # The meta for map_partitions should describe the output of the function, which is a pandas Series of numpy arrays.
+    # Need to create a dummy input to infer the shape of the embedding array.
+    with torch.inference_mode():
+        with torch.autocast('cuda', dtype=torch.bfloat16):
+            # Create a dummy image, transform it, and pass it through the model to get output shape
+            dummy_image = Image.new('RGB', (256, 256)) # Example size
+            dummy_batch_img = make_transform()(dummy_image)[None].to('cuda').to(dtype=torch.bfloat16)
+            dummy_output = model(dummy_batch_img)
+            dummy_embedding_shape = dummy_output.cpu().numpy().flatten().shape
     # Create a meta Series containing an array of the correct shape and type
     meta = pd.Series([np.zeros(dummy_embedding_shape, dtype=np.float32)], dtype=object)
-
     emb = dfd.item.map_partitions(get_embeddings, model_arg=delayed(load_model)(), meta=meta)
-
     emb.to_csv("../../data/images_with_embeddings.csv", index=False)
