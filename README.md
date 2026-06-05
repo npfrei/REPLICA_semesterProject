@@ -12,14 +12,13 @@ This github hosts the code used to generate the dataset at 10.5281/zenodo.202703
 ### Summary
 
 
-    The images and the metadata were collected using[Wikidata&#39;s REST API](https://www.wikidata.org/wiki/Wikidata:REST_API).
- (186'552 paintings in total) 
+    The images and the metadata were collected using[Wikidata;s REST API](https://www.wikidata.org/wiki/Wikidata:REST_API).
+   (186'552 paintings in total)
    The images themselves were pulled from [Wikimedia commons](https://commons.wikimedia.org/wiki/Main_Page)
 
   Embeddings for each image were computed using the DINOV3 VITL16 model 
     
-
-Clustering was done using DBScan \cite{10.5555/3001460.3001507} with increasing epsilon parameter (from 1 to 11) and a minimum number of points to form a cluster (\textit{MinPoints}) parameter of 2. The eps parameter defines the radius of the neighborhood of a point in the embedding space. If at least \textit{MinPoints} lie in the neighborhood of a point, a cluster is formed. DBSCAN was picked for it's efficiency for high-dimensional data (1024 in our case), its ability to find clusters of arbitrary shape and the fact that the number of clusters doesn't need to be picked before running the algorithm.
+Clustering was done using DBScan  with increasing epsilon parameter (from 1 to 11) and a minimum number of points to form a cluster parameter of 2. The eps parameter defines the radius of the neighborhood of a point in the embedding space. If at least MinPoints lie in the neighborhood of a point, a cluster is formed. DBSCAN was picked for it's efficiency for high-dimensional data (1024 in our case), its ability to find clusters of arbitrary shape and the fact that the number of clusters doesn't need to be picked before running the algorithm.
 
     The increase in the parameter in meant to identify clusters of different nature. Lower values tend to lead to clusters with mostly identical or very similar images images, while higher values lead to larger clusters who tend to have links of different natures (thematic, stylistic or authorly). A total of 15,285 unique clusters were found. . Examples of clusters can be found below
 
