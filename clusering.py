@@ -1,15 +1,10 @@
 
 import numpy as np
-import scipy as sp
-import matplotlib.pyplot as plt
 import pandas as pd
 import os
 from sklearn.cluster import DBSCAN
-from PIL import Image
-from wikiart import get_metadata_from_wikidata_id
-import json
-import jsondiff as jd
 from jsondiff import diff, symbols
+from helpers import display_cluster
 from collections import defaultdict
 
 
@@ -25,9 +20,9 @@ def get_files(df = None):
     if df is not None:
         files_wd = [f for f in files_wd if f in df["label"].values]
     f_wd = np.array([f for f in files_wd if f.endswith(".npy")])
-    i_wd = np.array([f for f in files_wd if f.endswith(".jpg")])
+   
     embeddings_wd = np.array([np.load(IMAGES_DIR_WIKIDATA + f, allow_pickle=True) for f in f_wd])
-    return f_wd, embeddings_wd, i_wd
+    return f_wd, embeddings_wd
 
 """
 Cluster the embeddings with DBSCAN and save the results in a csv file. If display is True, display the clusters 
@@ -35,52 +30,49 @@ Cluster the embeddings with DBSCAN and save the results in a csv file. If displa
 """
 def dbscan_clustering(embeddings, filename, eps,display=False):
     
-    for i in range(1,len(eps)):
+    for i in range(len(eps)-1):
         
-        dist = str(eps[i]/10)
-        print(i)
-        #dist2 = str(eps[i+1]/10)
+        dist = str(eps[i])
+        clusters = DBSCAN(eps=eps[i], min_samples=2).fit_predict(embeddings)
+        df = pd.read_csv(filename)
+        df["cluster_" + dist] = clusters
+        #Keep the same cluster ids even with different eps
+        if i >0:
+            df2 = df[df["cluster_" + dist]!=-1]
+            df3 = df2[df2["cluster_" + dist]!=df2["cluster_" + str(eps[i-1])]]
+            st = df3.groupby(["cluster_" + dist, "cluster_" + str(eps[i-1])]).count().reset_index()
+            cluster_labels = {-1:-1}
+            max_ = max(df["cluster_" + str(eps[i-1])])
+            for ind in st.index:
+                
+                
+                old = st["cluster_" + str(eps[i-1])][ind]
+                new = st["cluster_" + dist][ind]
+                if old!=-1:
+                    
+                    cluster_labels.update({new:old})
+                elif new not in cluster_labels.keys():
+                    
+                    max_ +=1
+                    cluster_labels.update({new:max_})
+            
+        df2 = df.replace({"cluster_" + dist: cluster_labels})      
+        df2.to_csv(filename, index=False)
         
+        if df2["cluster_" + dist].nunique()<=1:
+            break
+        
+        dist2 = str(eps[i+1])
         if display: #creates images for each cluster if display is True, limited to 200 images per cluster to avoid memory issues
             for id_ in df["cluster_"+ dist2].unique():
                 if id_!=-1 and len(df[df["cluster_"+ dist2]==id_])<200 :
                     if id_ in df["cluster_"+ dist]:
                         files = df[df["cluster_"+ dist]==id_]
                         files2 = df[df["cluster_"+ dist2]==id_]
-                        print(len(files),len(files2))
                         if len(files)!=len(files2):
-                            display_cluster(df, id_, eps[i+1]/10)
+                            display_cluster(df, id_, eps[i+1])
                     else:
-                        display_cluster(df, id_, eps[i+1]/10)
-            
-        
-        clusters = DBSCAN(eps=eps[i]/10, min_samples=2).fit_predict(embeddings)
-        df = pd.read_csv(filename)
-        df["cluster_" + dist] = clusters
-            
-        df2 = df[df["cluster_" + dist]!=-1]
-        df3 = df2[df2["cluster_" + dist]!=df2["cluster_" + str(eps[i-1]/10)]]
-        st = df3.groupby(["cluster_" + dist, "cluster_" + str(eps[i-1]/10)]).count().reset_index()
-        cluster_labels = {-1:-1}
-        max_ = max(df["cluster_" + str(eps[i-1]/10)])
-        for ind in st.index:
-            
-            
-            old = st["cluster_" + str(eps[i-1]/10)][ind]
-            new = st["cluster_" + dist][ind]
-            if old!=-1:
-                
-                cluster_labels.update({new:old})
-            elif new not in cluster_labels.keys():
-                
-                max_ +=1
-                cluster_labels.update({new:max_})
-            
-        df2 = df.replace({"cluster_" + dist: cluster_labels})      
-        df2.to_csv(filename, index=False)
-        print(df2["cluster_" + dist].nunique())
-        if df2["cluster_" + dist].nunique()<=1:
-            break
+                        display_cluster(df, id_, eps[i+1])
     
 
 
@@ -100,31 +92,22 @@ def compare_jsons(j1, j2):
                 if v.get(0, {}).get(symbols.update, {}).get("value") is not None:
                     for s1, v1 in v[0][symbols.update]["value"].items():
                         if s1==symbols.update:
-                            keys = v1.keys()
-                            
                             old = v1.get("content")
                             if isinstance(old, dict) and old.get(symbols.update) is not None:
                                 old = old.get(symbols.update)
                             
                             new = j1["statements"][s][0]["value"].get("content") 
                             
-                            
                             if ((isinstance(old, dict) and not symbols.insert in old.keys()) or not isinstance(old, dict)) and ((isinstance(old, dict) and not symbols.insert in new.keys()) or not isinstance(new, dict)):
                                 statements_changes[s] = (old, new)
         
         labels = updates.get("labels", {}).get(symbols.update, {})
         if labels is not None:
-            
-            
-            #print(labels.keys())
             old = labels.values()
             new = [j1["labels"][s2] for s2 in labels.keys()]
             labels_changes = dict(zip(labels.keys(), zip(old, new)))
         
-                    
-    
     if statements_changes!={}:  #only return something if there is a change in statements             
-        
         return (1,statements_changes, labels_changes)
     return (0,{}, {})        
     
@@ -134,7 +117,7 @@ For all clusters, get the size, at what eps they appear, what are their subclust
 def get_clusters_description():
     
     
-    df = pd.read_csv("dbscan_labels10.csv", index_col=0)
+    df = pd.read_csv("dbscan_labels.csv", index_col=0)
     
     cols = [c for c in df.columns if c.startswith("cluster_")]
     
@@ -175,7 +158,7 @@ def get_clusters_description():
 Used to correct the clusters obtained with DBSCAN, if a cluster appears at a certain eps but not at a smaller one, we check if the members of this cluster belong to the same cluster at the smaller eps, if not we give them a new cluster id.
 """ 
 def corr_dbscan():
-    df = pd.read_csv("dbscan_labels9.csv", index_col=0)
+    df = pd.read_csv("dbscan_labels.csv", index_col=0)
     cols = [c for c in df.columns if c.startswith("cluster_")]
     all_clusters = set()
     for col in cols:
@@ -210,16 +193,14 @@ def corr_dbscan():
     for col in cols:
         all_clusters = all_clusters.union(set(df[col].unique()))    
     
-    df.to_csv("dbscan_labels10.csv", index=True)               
-f, e, i = get_files()
-print(len(f), len(e))
-f = set(f_.removesuffix(".npy") for f_ in f)    
-m = set(m_.removesuffix(".json") for m_ in os.listdir("../../data/metadata_same/"))
-diff = m.difference(f)
-print(len(diff))
+    df.to_csv("dbscan_labels.csv", index=True)               
 
-for file in diff:
-    os.replace(f"../../data/metadata_same/{file}.json", f"../../data/metadata2/{file}.json")
+def main():
+    _, embeddings_wd = get_files()
+    dbscan_clustering(embeddings_wd, "dbscan_labels.csv", range(1,11))
+    get_clusters_description()
+if __name__=="__main__":
+    main()
 
  
 
